@@ -5,6 +5,8 @@ import java.io.FileInputStream;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -47,6 +49,7 @@ import com.nisovin.shopkeepers.util.StringUtils;
 public class SKShopkeeperStorage implements ShopkeeperStorage {
 
 	private final SKShopkeepersPlugin plugin;
+	private final Set<Integer> deferredShopkeepers = new HashSet<>();
 
 	// data:
 	private final FileConfiguration saveData = new YamlConfiguration();
@@ -206,8 +209,30 @@ public class SKShopkeeperStorage implements ShopkeeperStorage {
 	private void clearSaveData() {
 		this.clearConfigSection(saveData);
 		this.clearConfigSection(saveDataBuffer);
+		deferredShopkeepers.clear();
 		maxStoredShopkeeperId = 0;
 		nextShopkeeperId = 1;
+	}
+
+	/**
+	 * Records a shopkeeper whose object type is not available yet. Its raw save
+	 * data remains in memory and can be loaded after an external type registers.
+	 *
+	 * @param id the shopkeeper id
+	 * @param objectType the unresolved object type
+	 */
+	public void deferShopkeeper(int id, String objectType) {
+		deferredShopkeepers.add(id);
+		Log.info("Deferring shopkeeper '" + id + "' until object type '" + objectType + "' is registered.");
+	}
+
+	/**
+	 * Gets a defensive snapshot of deferred shopkeeper ids.
+	 *
+	 * @return deferred ids
+	 */
+	public Set<Integer> getDeferredShopkeeperIds() {
+		return Collections.unmodifiableSet(new HashSet<>(deferredShopkeepers));
 	}
 
 	private void clearConfigSection(ConfigurationSection configSection) {

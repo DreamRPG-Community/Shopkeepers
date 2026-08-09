@@ -2,8 +2,10 @@ package com.nisovin.shopkeepers;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
@@ -29,6 +31,8 @@ import com.nisovin.shopkeepers.api.shopkeeper.ShopType;
 import com.nisovin.shopkeepers.api.shopkeeper.Shopkeeper;
 import com.nisovin.shopkeepers.api.shopkeeper.TradingRecipe;
 import com.nisovin.shopkeepers.api.shopkeeper.player.PlayerShopkeeper;
+import com.nisovin.shopkeepers.api.shopobjects.ExternalShopObjectType;
+import com.nisovin.shopkeepers.api.shopobjects.ShopObjectType;
 import com.nisovin.shopkeepers.chestprotection.ProtectedChests;
 import com.nisovin.shopkeepers.commands.Commands;
 import com.nisovin.shopkeepers.compat.NMSManager;
@@ -54,6 +58,7 @@ import com.nisovin.shopkeepers.shopobjects.AbstractShopObjectType;
 import com.nisovin.shopkeepers.shopobjects.SKDefaultShopObjectTypes;
 import com.nisovin.shopkeepers.shopobjects.SKShopObjectTypesRegistry;
 import com.nisovin.shopkeepers.shopobjects.citizens.CitizensShops;
+import com.nisovin.shopkeepers.shopobjects.external.SKExternalShopObjectType;
 import com.nisovin.shopkeepers.shopobjects.living.LivingShops;
 import com.nisovin.shopkeepers.shopobjects.sign.SignShops;
 import com.nisovin.shopkeepers.storage.SKShopkeeperStorage;
@@ -79,6 +84,9 @@ public class SKShopkeepersPlugin extends JavaPlugin implements ShopkeepersPlugin
 	// shop types and shop object types registry:
 	private final SKShopTypesRegistry shopTypesRegistry = new SKShopTypesRegistry();
 	private final SKShopObjectTypesRegistry shopObjectTypesRegistry = new SKShopObjectTypesRegistry();
+	private final Map<String, SKExternalShopObjectType> externalShopObjectTypes = new HashMap<>();
+	private boolean shopkeeperDataLoaded = false;
+	private boolean externalReloadScheduled = false;
 
 	// default shop and shop object types:
 	private final SKDefaultShopTypes defaultShopTypes = new SKDefaultShopTypes();
@@ -106,6 +114,8 @@ public class SKShopkeepersPlugin extends JavaPlugin implements ShopkeepersPlugin
 	@Override
 	public void onEnable() {
 		plugin = this;
+		shopkeeperDataLoaded = false;
+		externalReloadScheduled = false;
 		ShopkeepersAPI.enable(this);
 
 		// try to load suitable NMS code:
@@ -221,6 +231,7 @@ public class SKShopkeepersPlugin extends JavaPlugin implements ShopkeepersPlugin
 
 		// activate (spawn) shopkeepers in loaded chunks:
 		shopkeeperRegistry.loadShopkeepersInAllWorlds();
+		shopkeeperDataLoaded = true;
 
 		Bukkit.getScheduler().runTaskLater(this, () -> {
 			// remove invalid citizens shopkeepers:
@@ -248,6 +259,8 @@ public class SKShopkeepersPlugin extends JavaPlugin implements ShopkeepersPlugin
 
 	@Override
 	public void onDisable() {
+		shopkeeperDataLoaded = false;
+		externalReloadScheduled = false;
 		// wait for async tasks to complete:
 		SchedulerUtils.awaitAsyncTasksCompletion(this, ASYNC_TASKS_TIMEOUT_SECONDS, this.getLogger());
 
@@ -292,6 +305,7 @@ public class SKShopkeepersPlugin extends JavaPlugin implements ShopkeepersPlugin
 		// clear all types of registers:
 		shopTypesRegistry.clearAll();
 		shopObjectTypesRegistry.clearAll();
+		externalShopObjectTypes.clear();
 		uiRegistry.clearAll();
 
 		HandlerList.unregisterAll(this);
@@ -414,6 +428,30 @@ public class SKShopkeepersPlugin extends JavaPlugin implements ShopkeepersPlugin
 	@Override
 	public SKShopObjectTypesRegistry getShopObjectTypeRegistry() {
 		return shopObjectTypesRegistry;
+	}
+
+	@Override
+	public ShopObjectType<?> registerExternalShopObjectType(ExternalShopObjectType type) {
+		Validate.notNull(type, "External shop object type is null!");
+		SKExternalShopObjectType adapter = new SKExternalShopObjectType(type);
+		Validate.isTrue(!externalShopObjectTypes.containsKey(adapter.getIdentifier()),
+				"External shop object type is already registered: " + adapter.getIdentifier());
+		shopObjectTypesRegistry.register(adapter);
+		externalShopObjectTypes.put(adapter.getIdentifier(), adapter);
+		this.scheduleExternalShopkeeperReload();
+		return adapter;
+	}
+
+	private void scheduleExternalShopkeeperReload() {
+		if (!shopkeeperDataLoaded || externalReloadScheduled) return;
+		externalReloadScheduled = true;
+		Bukkit.getScheduler().runTask(this, () -> {
+			externalReloadScheduled = false;
+			if (!this.isEnabled()) return;
+			if (!shopkeeperStorage.reload()) {
+				Log.warning("Failed to reload deferred external shopkeepers after type registration.");
+			}
+		});
 	}
 
 	@Override

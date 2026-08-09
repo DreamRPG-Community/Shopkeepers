@@ -11,6 +11,8 @@ import com.nisovin.shopkeepers.api.shopkeeper.Shopkeeper;
 import com.nisovin.shopkeepers.api.shopkeeper.ShopkeeperRegistry;
 import com.nisovin.shopkeepers.api.shopkeeper.TradingRecipe;
 import com.nisovin.shopkeepers.api.shopobjects.DefaultShopObjectTypes;
+import com.nisovin.shopkeepers.api.shopobjects.ExternalShopObjectType;
+import com.nisovin.shopkeepers.api.shopobjects.ShopObjectType;
 import com.nisovin.shopkeepers.api.shopobjects.ShopObjectTypesRegistry;
 import com.nisovin.shopkeepers.api.storage.ShopkeeperStorage;
 import com.nisovin.shopkeepers.api.ui.UIRegistry;
@@ -67,6 +69,16 @@ public final class ShopkeepersAPI {
 
 	public static ShopObjectTypesRegistry<?> getShopObjectTypeRegistry() {
 		return getPlugin().getShopObjectTypeRegistry();
+	}
+
+	/**
+	 * Registers an object type whose implementation is owned by another plugin.
+	 *
+	 * @param type the external type, not {@code null}
+	 * @return the registered Shopkeepers object type
+	 */
+	public static ShopObjectType<?> registerExternalShopObjectType(ExternalShopObjectType type) {
+		return getPlugin().registerExternalShopObjectType(type);
 	}
 
 	public static DefaultShopObjectTypes getDefaultShopObjectTypes() {

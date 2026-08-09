@@ -107,6 +107,13 @@ public interface Shopkeeper {
 	public Location getLocation();
 
 	/**
+	 * Changes the stored location of this shopkeeper.
+	 *
+	 * @param location the new location, not {@code null}
+	 */
+	public void setLocation(Location location);
+
+	/**
 	 * Gets the {@link ChunkCoords} identifying the chunk this shopkeeper spawns in.
 	 * 
 	 * @return the chunk coordinates

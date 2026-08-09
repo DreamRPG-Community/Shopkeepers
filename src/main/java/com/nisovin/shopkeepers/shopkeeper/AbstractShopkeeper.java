@@ -29,6 +29,7 @@ import com.nisovin.shopkeepers.api.ui.UIType;
 import com.nisovin.shopkeepers.api.util.ChunkCoords;
 import com.nisovin.shopkeepers.shopobjects.AbstractShopObject;
 import com.nisovin.shopkeepers.shopobjects.AbstractShopObjectType;
+import com.nisovin.shopkeepers.shopobjects.external.SKExternalShopObject;
 import com.nisovin.shopkeepers.ui.UIHandler;
 import com.nisovin.shopkeepers.ui.defaults.SKDefaultUITypes;
 import com.nisovin.shopkeepers.ui.defaults.TradingHandler;
@@ -232,6 +233,7 @@ public abstract class AbstractShopkeeper implements Shopkeeper {
 				// mark dirty, so the correct id gets saved:
 				this.markDirty();
 			} else {
+				SKShopkeepersPlugin.getInstance().getShopkeeperStorage().deferShopkeeper(id, objectTypeId);
 				throw new ShopkeeperCreateException("Invalid object type for shopkeeper '" + id + "': " + objectTypeId);
 			}
 		}
@@ -418,7 +420,10 @@ public abstract class AbstractShopkeeper implements Shopkeeper {
 	 * @param location
 	 *            the new stored location of this shopkeeper
 	 */
+	@Override
 	public void setLocation(Location location) {
+		Validate.notNull(location, "Location is null!");
+		Validate.notNull(location.getWorld(), "Location world is null!");
 		this.markDirty();
 		ChunkCoords oldChunk = this.getChunkCoords();
 		x = location.getBlockX();
@@ -429,6 +434,9 @@ public abstract class AbstractShopkeeper implements Shopkeeper {
 
 		// update shopkeeper in chunk map:
 		SKShopkeepersPlugin.getInstance().getShopkeeperRegistry().onShopkeeperMove(this, oldChunk);
+		if (shopObject instanceof SKExternalShopObject) {
+			((SKExternalShopObject) shopObject).onShopkeeperMove(location);
+		}
 	}
 
 	@Override

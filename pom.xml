@@ -61,13 +61,6 @@
 	<modules>
 		<module>modules/api</module>
 		<module>modules/main</module>
-		<module>modules/v1_8_R1</module>
-		<module>modules/v1_8_R2</module>
-		<module>modules/v1_8_R3</module>
-		<module>modules/v1_9_R1</module>
-		<module>modules/v1_9_R2</module>
-		<module>modules/v1_10_R1</module>
-		<module>modules/v1_11_R1</module>
 		<module>modules/v1_12_R1</module>
 		<module>modules/dist</module>
 	</modules>
@@ -109,9 +102,9 @@
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
-			<groupId>com.palmergames.bukkit.towny</groupId>
-			<artifactId>Towny</artifactId>
-			<version>0.84.0</version>
+			<groupId>com.sk89q.worldedit</groupId>
+			<artifactId>worldedit</artifactId>
+			<version>6.1.9</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>

@@ -11,6 +11,8 @@ import com.nisovin.shopkeepers.api.shopkeeper.Shopkeeper;
 import com.nisovin.shopkeepers.api.shopkeeper.ShopkeeperRegistry;
 import com.nisovin.shopkeepers.api.shopkeeper.TradingRecipe;
 import com.nisovin.shopkeepers.api.shopobjects.DefaultShopObjectTypes;
+import com.nisovin.shopkeepers.api.shopobjects.ExternalShopObjectType;
+import com.nisovin.shopkeepers.api.shopobjects.ShopObjectType;
 import com.nisovin.shopkeepers.api.shopobjects.ShopObjectTypesRegistry;
 import com.nisovin.shopkeepers.api.storage.ShopkeeperStorage;
 import com.nisovin.shopkeepers.api.ui.DefaultUITypes;
@@ -65,6 +67,15 @@ public interface ShopkeepersPlugin extends Plugin {
 	// SHOP OBJECT TYPES
 
 	public ShopObjectTypesRegistry<?> getShopObjectTypeRegistry();
+
+	/**
+	 * Registers an object type whose implementation is owned by another plugin.
+	 *
+	 * @param type the external type, not {@code null}
+	 * @return the registered Shopkeepers object type to use in
+	 *         {@link ShopCreationData}
+	 */
+	public ShopObjectType<?> registerExternalShopObjectType(ExternalShopObjectType type);
 
 	public DefaultShopObjectTypes getDefaultShopObjectTypes();
 

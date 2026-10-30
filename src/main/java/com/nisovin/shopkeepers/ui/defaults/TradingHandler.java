@@ -3,6 +3,7 @@ package com.nisovin.shopkeepers.ui.defaults;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
@@ -148,7 +149,24 @@ public class TradingHandler extends UIHandler {
 
 	@Override
 	protected void onInventoryClose(InventoryCloseEvent event, Player player) {
-		// nothing to do by default
+		// Vanilla 1.12 drops unused trade inputs. Return them before a disconnect snapshot is saved.
+		Inventory inventory = event.getInventory();
+		for (int slot = 0; slot < RESULT_ITEM_SLOT_ID; slot++) {
+			ItemStack input = inventory.getItem(slot);
+			if (ItemUtils.isEmpty(input)) continue;
+			inventory.setItem(slot, null);
+			Map<Integer, ItemStack> remaining = player.getInventory().addItem(input.clone());
+			if (!remaining.isEmpty()) {
+				// Let vanilla drop only the portion that cannot fit, exactly once.
+				inventory.setItem(slot, remaining.values().iterator().next());
+			}
+		}
+		ItemStack cursor = player.getItemOnCursor();
+		if (!ItemUtils.isEmpty(cursor)) {
+			player.setItemOnCursor(null);
+			Map<Integer, ItemStack> remaining = player.getInventory().addItem(cursor.clone());
+			if (!remaining.isEmpty()) player.setItemOnCursor(remaining.values().iterator().next());
+		}
 	}
 
 	// TRADE PROCESSING

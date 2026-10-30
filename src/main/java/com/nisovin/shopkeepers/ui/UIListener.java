@@ -8,6 +8,7 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.Inventory;
 
 import com.nisovin.shopkeepers.api.ShopkeepersPlugin;
@@ -21,6 +22,15 @@ class UIListener implements Listener {
 	UIListener(ShopkeepersPlugin plugin, SKUIRegistry uiRegistry) {
 		this.plugin = plugin;
 		this.uiRegistry = uiRegistry;
+	}
+
+	@EventHandler(priority = EventPriority.LOWEST)
+	void onPlayerQuit(PlayerQuitEvent event) {
+		Player player = event.getPlayer();
+		if (uiRegistry.getSession(player) != null) {
+			// Close while the session still exists, before player-data plugins capture at MONITOR.
+			player.closeInventory();
+		}
 	}
 
 	@EventHandler(priority = EventPriority.NORMAL)

@@ -223,7 +223,7 @@ public class SKShopkeeperStorage implements ShopkeeperStorage {
 	 */
 	public void deferShopkeeper(int id, String objectType) {
 		deferredShopkeepers.add(id);
-		Log.info("Deferring shopkeeper '" + id + "' until object type '" + objectType + "' is registered.");
+		Log.debug("Deferring shopkeeper '" + id + "' until object type '" + objectType + "' is registered.");
 	}
 
 	/**
@@ -358,12 +358,24 @@ public class SKShopkeeperStorage implements ShopkeeperStorage {
 			try {
 				shopkeeperRegistry.loadShopkeeper(shopType, id, shopkeeperSection);
 			} catch (ShopkeeperCreateException e) {
-				Log.warning("Failed to load shopkeeper '" + key + "': " + e.getMessage());
+				if (deferredShopkeepers.contains(id)) {
+					Log.debug("Deferred shopkeeper '" + key + "': " + e.getMessage());
+				} else {
+					Log.warning("Failed to load shopkeeper '" + key + "': " + e.getMessage());
+				}
 				continue; // skip this shopkeeper
 			} catch (Exception e) {
 				Log.warning("Failed to load shopkeeper '" + key + "'", e);
 				continue; // skip this shopkeeper
 			}
+		}
+		if (!deferredShopkeepers.isEmpty()) {
+			Log.info("Deferred " + deferredShopkeepers.size() + " shopkeepers until external object types register.");
+			Bukkit.getScheduler().runTaskLater(plugin, () -> {
+				if (!deferredShopkeepers.isEmpty()) {
+					Log.warning(deferredShopkeepers.size() + " shopkeepers remain deferred after plugin startup; check external object type providers.");
+				}
+			}, 20L);
 		}
 
 		// create a copy of the save data's top level data structure:
